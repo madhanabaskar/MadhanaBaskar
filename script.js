@@ -114,8 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.message || 'Error sending email.');
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error sending email.');
                 }
 
                 formMessage.textContent = 'Thanks! Your message has been sent successfully.';
