@@ -64,35 +64,82 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Form Handling ---
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
+        let isSubmitting = false;
+        contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // In a real application, you would send this data to a backend or service like Formspree
+            if (isSubmitting) return;
+
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const projectType = document.getElementById('project-type').value;
+            const message = document.getElementById('message').value.trim();
+
+            if (!name || !email || !message) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+
             const submitBtn = contactForm.querySelector('.submit-btn');
             const originalText = submitBtn.textContent;
             
-            // Simulate sending state
+            let formMessage = document.getElementById('form-message');
+            if (!formMessage) {
+                formMessage = document.createElement('div');
+                formMessage.id = 'form-message';
+                formMessage.style.marginTop = '1rem';
+                formMessage.style.fontSize = '0.95rem';
+                formMessage.style.fontWeight = '500';
+                formMessage.style.textAlign = 'center';
+                contactForm.appendChild(formMessage);
+            }
+            formMessage.textContent = '';
+            
+            isSubmitting = true;
             submitBtn.textContent = 'Sending...';
             submitBtn.style.opacity = '0.7';
             submitBtn.disabled = true;
-            
-            setTimeout(() => {
-                submitBtn.textContent = 'Message Sent!';
+
+            try {
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, projectType, message })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Error sending email.');
+                }
+
+                formMessage.textContent = 'Thanks! Your message has been sent successfully.';
+                formMessage.style.color = '#2e7d32'; // a clean green
+                
                 submitBtn.style.backgroundColor = 'var(--color-terracotta)';
                 submitBtn.style.color = 'var(--color-white)';
                 
-                // Reset form
                 contactForm.reset();
+            } catch (error) {
+                formMessage.textContent = error.message || 'Failed to send message. Please try again later.';
+                formMessage.style.color = '#d32f2f'; // a clean red
+            } finally {
+                isSubmitting = false;
+                submitBtn.textContent = originalText;
+                submitBtn.style.backgroundColor = '';
+                submitBtn.style.color = '';
+                submitBtn.style.opacity = '1';
+                submitBtn.disabled = false;
                 
-                // Revert button after 3 seconds
                 setTimeout(() => {
-                    submitBtn.textContent = originalText;
-                    submitBtn.style.backgroundColor = '';
-                    submitBtn.style.color = '';
-                    submitBtn.style.opacity = '1';
-                    submitBtn.disabled = false;
-                }, 3000);
-            }, 1500);
+                    if(formMessage) formMessage.textContent = '';
+                }, 5000);
+            }
         });
     }
 });
