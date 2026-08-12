@@ -1,7 +1,5 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 module.exports = async function handler(req, res) {
     // 1. Accept POST requests only
     if (req.method !== 'POST') {
@@ -13,6 +11,8 @@ module.exports = async function handler(req, res) {
         console.error('Missing RESEND_API_KEY environment variable');
         return res.status(500).json({ success: false, error: 'Server configuration error' });
     }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { name, email, projectType, message } = req.body;
 
