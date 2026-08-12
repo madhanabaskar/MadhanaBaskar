@@ -1,0 +1,24 @@
+{
+  "name": "madhanabaskar",
+  "version": "1.0.0",
+  "description": "",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/madhanabaskar/MadhanaBaskar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/madhanabaskar/MadhanaBaskar/issues"
+  },
+  "homepage": "https://github.com/madhanabaskar/MadhanaBaskar#readme",
+  "dependencies": {
+    "resend": "^6.19.0"
+  }
+}

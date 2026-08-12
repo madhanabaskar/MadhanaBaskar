@@ -1,3 +1,7 @@
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 export default async function handler(req, res) {
     // 1. Accept POST requests only
     if (req.method !== 'POST') {
@@ -10,11 +14,6 @@ export default async function handler(req, res) {
         return res.status(500).json({ success: false, error: 'Server configuration error' });
     }
 
-    if (!process.env.CONTACT_EMAIL) {
-        console.error('Missing CONTACT_EMAIL environment variable');
-        return res.status(500).json({ success: false, error: 'Server configuration error' });
-    }
-
     const { name, email, projectType, message } = req.body;
 
     // 3. Validate incoming data
@@ -23,48 +22,39 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 5. Use the Resend API correctly to send the enquiry
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                // 7. Use a valid "from" address supported by Resend
-                // The 'onboarding@resend.dev' address is the default test address.
-                // It only works if the 'to' address is the email you signed up to Resend with.
-                from: 'Contact Form <onboarding@resend.dev>',
-                
-                // 6. Send the enquiry to the email stored in env variable
-                to: [process.env.CONTACT_EMAIL],
-                subject: `New Contact Enquiry from ${name}`,
-                html: `
-                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-                        <h2 style="color: #111; border-bottom: 1px solid #ddd; padding-bottom: 10px;">New Contact Enquiry</h2>
-                        <p><strong>Name:</strong> ${name}</p>
-                        <p><strong>Email:</strong> ${email}</p>
-                        <p><strong>Project Type:</strong> ${projectType || 'Not specified'}</p>
-                        <p><strong>Message:</strong></p>
-                        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-top: 10px; white-space: pre-wrap;">${message}</div>
-                    </div>
-                `
-            })
+        // 5. Use the Resend API to send the enquiry
+        const { data, error } = await resend.emails.send({
+            // 7. Use a valid "from" address supported by Resend
+            // The 'onboarding@resend.dev' address is the default test address.
+            // It only works if the 'to' address is the email you signed up to Resend with.
+            from: 'Contact Form <onboarding@resend.dev>',
+            
+            // 6. Send the enquiry to the requested email
+            to: ['madhanabaskar6@gmail.com'],
+            subject: 'New Contact Form Submission',
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                    <h2 style="color: #111; border-bottom: 1px solid #ddd; padding-bottom: 10px;">New Contact Form Submission</h2>
+                    <p><strong>Name:</strong> ${name}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Project Type:</strong> ${projectType || 'Not specified'}</p>
+                    <p><strong>Message:</strong></p>
+                    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-top: 10px; white-space: pre-wrap;">${message}</div>
+                </div>
+            `
         });
 
-        const data = await response.json();
-
         // 4. Return proper HTTP status codes
-        if (!response.ok) {
-            console.error('Resend error:', data);
+        if (error) {
+            console.error('Resend error:', error);
             // Include a helpful message in the error
-            return res.status(response.status).json({ success: false, error: data.message || 'Error sending email via Resend' });
+            return res.status(400).json({ success: false, error: error.message || 'Error sending email via Resend' });
         }
 
         // 8. Return JSON response such as { "success": true }
         return res.status(200).json({ success: true });
-    } catch (error) {
-        console.error('Server error:', error);
+    } catch (err) {
+        console.error('Server error:', err);
         return res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 }
