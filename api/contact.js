@@ -1,4 +1,24 @@
 const { Resend } = require('resend');
+const fs = require('fs');
+const path = require('path');
+
+// Fallback: manually load .env file if the environment variables aren't injected automatically
+if (!process.env.RESEND_API_KEY) {
+    try {
+        const envPath = path.resolve(process.cwd(), '.env');
+        if (fs.existsSync(envPath)) {
+            const envFile = fs.readFileSync(envPath, 'utf8');
+            envFile.split('\n').forEach(line => {
+                const [key, ...value] = line.split('=');
+                if (key && value.length > 0) {
+                    process.env[key.trim()] = value.join('=').trim().replace(/^['"]|['"]$/g, '');
+                }
+            });
+        }
+    } catch (e) {
+        console.error("Could not load .env file manually", e);
+    }
+}
 
 module.exports = async function handler(req, res) {
     // 1. Accept POST requests only
